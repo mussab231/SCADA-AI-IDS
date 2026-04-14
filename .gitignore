@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# AI Models & Data
+backend/trained_models/*.pkl
+backend/data/*.csv
+
+# OS
+.DS_Store
