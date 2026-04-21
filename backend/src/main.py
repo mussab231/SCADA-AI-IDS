@@ -1,20 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.routes import router as api_router
+from src.api.routes import router
+from src.db.session import engine, Base
 
-app = FastAPI(title="AngelusVigil AI Threat Detection")
+# --- الحل المعماري: استدعاء الملف الذي يحتوي على جميع الجداول ---
+from src.models import threat 
 
-# إعدادات الحماية للسماح للفرونت إند بالاتصال بالباك إند
+# --- بناء الجداول بناءً على الاستدعاء الشامل أعلاه ---
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Vigil SOC WAF API")
+
+# إعداد الـ CORS لكي يتصل الفرونت إند
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # في بيئة الإنتاج نضع رابط الفرونت إند فقط
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api")
+# ربط المسارات
+app.include_router(router, prefix="/api")
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "message": "Backend is running smoothly!"}
+@app.get("/")
+def read_root():
+    return {"message": "Vigil WAF is running!"}

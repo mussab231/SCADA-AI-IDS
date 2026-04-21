@@ -1,49 +1,68 @@
 import os
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import joblib
+import numpy as np
 
 class ThreatAnalyzer:
     def __init__(self):
-        # مسار النموذج داخل حاوية لينكس
-        self.model_path = "/app/trained_models/rf_model.pkl"
+        self.model_path = "/app/trained_models/lstm_model.h5"
+        self.tokenizer_path = "/app/trained_models/tokenizer.pkl"
+        self.max_len = 150 # يجب أن يطابق ما استخدمناه في التدريب
+        
         self.model = None
-        self._load_model()
+        self.tokenizer = None
+        
+        self._load_brain()
 
-    def _load_model(self):
-        if os.path.exists(self.model_path):
-            self.model = joblib.load(self.model_path)
-            print(f"✅ AI Model loaded successfully from {self.model_path}")
+    def _load_brain(self):
+        """تحميل الشبكة العصبية والمترجم مرة واحدة فقط عند إقلاع السيرفر"""
+        print("🧠 جاري تحميل شبكة LSTM العصبية العميقة إلى الذاكرة...")
+        if os.path.exists(self.model_path) and os.path.exists(self.tokenizer_path):
+            # كتم تحذيرات TensorFlow المزعجة في الـ Terminal
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+            self.model = load_model(self.model_path)
+            self.tokenizer = joblib.load(self.tokenizer_path)
+            print("✅ تم ربط العقل العميق بنجاح!")
         else:
-            print(f"⚠️ Warning: Model not found at {self.model_path}. AI features disabled.")
+            print("⚠️ تحذير: ملفات العقل العميق غير موجودة. النظام سيعمل بشكل أعمى.")
 
     def analyze(self, endpoint: str, payload: str) -> dict:
-        """
-        تحليل الترافيك باستخدام خوارزمية Random Forest المدربة.
-        """
-        payload_str = str(payload) if payload else ""
-        
-        # إذا لم يكن النموذج محملاً (تجنباً لانهيار الخادم)
-        if self.model is None:
-            return {"threat_type": "Unknown", "severity": "Low", "confidence_score": 0.0}
+        """دالة الاستنتاج اللحظي"""
+        # إذا لم يكن العقل محملاً، نمرر الطلب كـ Normal لتجنب انهيار السيرفر
+        if not self.model or not self.tokenizer:
+            return {
+                "threat_type": "Unknown",
+                "severity": "Low",
+                "confidence_score": 0.0
+            }
 
-        # 1. التنبؤ بنوع الهجمة
-        prediction = self.model.predict([payload_str])[0]
-        
-        # 2. حساب نسبة الثقة في القرار (Confidence Score)
-        probabilities = self.model.predict_proba([payload_str])[0]
-        confidence = max(probabilities)
+        # 1. المعالجة اللغوية (Tokenization & Padding)
+        sequence = self.tokenizer.texts_to_sequences([payload])
+        padded_sequence = pad_sequences(sequence, maxlen=self.max_len, padding='post')
 
-        # 3. تحديد مستوى الخطورة ديناميكياً
-        severity = "Low"
-        if prediction in ["SQL Injection", "XSS"]:
-            severity = "Critical" if confidence > 0.8 else "High"
-        elif prediction != "Normal":
-            severity = "Medium"
+        # 2. الاستنتاج العصبي (Inference)
+        prediction_score = self.model.predict(padded_sequence, verbose=0)[0][0]
+
+        # 3. اتخاذ القرار المعماري
+        # بما أننا استخدمنا Sigmoid، النتيجة بين 0.0 و 1.0
+        # أقرب للـ 1 يعني SQLi، أقرب للـ 0 يعني Normal
+        if prediction_score > 0.5:
+            threat_type = "SQL Injection"
+            severity = "High" if prediction_score > 0.8 else "Medium"
+            confidence = prediction_score
+        else:
+            threat_type = "Normal"
+            severity = "Low"
+            # إذا كان قريباً من الصفر، فالثقة بأنه طبيعي هي (1 - النتيجة)
+            confidence = 1.0 - prediction_score 
 
         return {
-            "threat_type": str(prediction),
+            "threat_type": threat_type,
             "severity": severity,
-            "confidence_score": round(float(confidence), 2)
+            "confidence_score": float(confidence)
         }
 
-# إنشاء نسخة واحدة جاهزة للعمل
+# إنشاء نسخة واحدة (Singleton) ليستخدمها السيرفر
 analyzer_instance = ThreatAnalyzer()
