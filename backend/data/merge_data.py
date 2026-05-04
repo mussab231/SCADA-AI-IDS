@@ -23,7 +23,7 @@ df_sqli1 = safe_read_csv(f"{data_dir}/sqli.csv")
 df_sqli2 = safe_read_csv(f"{data_dir}/sqliv2.csv")
 df_sqli3 = safe_read_csv(f"{data_dir}/SQLiV3.csv")
 
-# مستقبلاً: بمجرد أن تحمل ملف xss.csv وتضعه في المجلد، سيتعرف عليه السكربت تلقائياً
+
 df_xss = safe_read_csv(f"{data_dir}/xss.csv") 
 df_pt = safe_read_csv(f"{data_dir}/path_traversal.csv")
 

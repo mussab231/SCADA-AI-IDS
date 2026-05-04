@@ -2,7 +2,7 @@ import urllib.request
 import pandas as pd
 import os
 
-# مصادر FuzzDB و PayloadsAllTheThings المستقرة
+
 THREAT_FEEDS = {
     "SQL Injection": [
         "https://raw.githubusercontent.com/swisskyrepo/PayloadsAllTheThings/master/SQL%20Injection/Intruder/Auth_Bypass.txt"
@@ -15,7 +15,7 @@ THREAT_FEEDS = {
 CSV_PATH = "/app/data/master_dataset.csv"
 
 def fetch_latest_threats():
-    print("🕵️‍♂️ بدء عملية الاستخبارات السيبرانية الذكية (Smart Intel)...")
+    print(" بدء عملية الاستخبارات السيبرانية الذكية (Smart Intel)...")
     
     new_payloads = []
     headers = {'User-Agent': 'Mozilla/5.0'}

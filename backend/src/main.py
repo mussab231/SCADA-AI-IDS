@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import router
 from src.db.session import engine, Base
 
-# --- الحل المعماري: استدعاء الملف الذي يحتوي على جميع الجداول ---
+
 from src.models import threat 
 
-# --- بناء الجداول بناءً على الاستدعاء الشامل أعلاه ---
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Vigil SOC WAF API")

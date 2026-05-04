@@ -16,6 +16,12 @@ class LoginCredentials(BaseModel):
     username: str
     password: str
 
+class ModbusTraffic(BaseModel):
+    function_code: int
+    address: int
+    value: int
+    length: int    
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -128,3 +134,61 @@ async def secure_login(credentials: LoginCredentials, request: Request, db: Sess
 def get_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     logs = db.query(TrafficLog).order_by(TrafficLog.timestamp.desc()).offset(skip).limit(limit).all()
     return logs
+# ==========================================
+# 6. البوابة الصناعية (ICS/SCADA WAF) - Zero-Day
+# ==========================================
+@router.post("/ics-check")
+async def check_ics_traffic(traffic: ModbusTraffic, request: Request, db: Session = Depends(get_db)):
+    """مسار يستقبل أوامر التحكم الصناعي (Modbus) ويفحصها بالعقل المضاد للمجهول"""
+    client_ip = request.client.host if request.client else "Unknown"
+
+    # 1. تحليل الإشارة الصناعية عبر العقل المضاد للمجهول
+    analysis = analyzer_instance.analyze_modbus(
+        fc=traffic.function_code,
+        address=traffic.address,
+        value=traffic.value,
+        length=traffic.length
+    )
+
+    # 2. تحديد حالة العبور
+    if analysis["threat_type"] != "Normal":
+        current_status = TrafficStatus.BLOCKED
+        reason_text = f"AI Blocked (MSE: {analysis['mse']:.5f})"
+    else:
+        current_status = TrafficStatus.ALLOWED
+        reason_text = "Normal ICS Traffic"
+
+    # 3. توثيق الحركة في قاعدة البيانات (لتظهر في الـ SOC Dashboard)
+    payload_str = f"Modbus[FC:{traffic.function_code}, Addr:{traffic.address}, Val:{traffic.value}, Len:{traffic.length}]"
+    
+    db_log = TrafficLog(
+        source_ip=client_ip,
+        endpoint="/api/ics-check",
+        payload=payload_str,
+        threat_type=analysis["threat_type"],
+        severity=analysis["severity"],
+        confidence_score=analysis["confidence_score"],
+        status=current_status.value,
+        reason=reason_text
+    )
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+
+    # 4. البث اللحظي للواجهة الأمامية
+    log_data = {
+        "id": db_log.id,
+        "timestamp": db_log.timestamp.isoformat(),
+        "source_ip": db_log.source_ip,
+        "status": db_log.status,
+        "threat_type": db_log.threat_type,
+        "reason": db_log.reason,
+        "payload": db_log.payload
+    }
+    await manager.broadcast(json.dumps(log_data))
+
+    # 5. الإعدام الفوري إذا تجاوز الخطأ العتبة
+    if current_status == TrafficStatus.BLOCKED:
+        raise HTTPException(status_code=403, detail=f"Zero-Day Anomaly Detected! Traffic Destroyed.")
+
+    return {"status": "success", "message": "Industrial traffic passed safely."}
