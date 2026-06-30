@@ -1,15 +1,13 @@
-# Python
-__pycache__/
-*.pyc
+# Node dependencies
+node_modules/
+
+# Environment variables (CRITICAL)
 .env
 
-# Node
-frontend/node_modules/
-frontend/dist/
+# Python artifacts
+__pycache__/
+*.pyc
 
-# AI Models & Data
-backend/trained_models/*.pkl
-backend/data/*.csv
-
-# OS
+# OS generated files
 .DS_Store
+Thumbs.db
