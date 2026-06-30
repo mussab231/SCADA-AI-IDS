@@ -1,49 +1,111 @@
-# 🛡️ AngelusVigil | AI-Powered Web Application Firewall (WAF)
+# SCADA-AI-IDS: Real-Time Cyber-Physical Intrusion Detection System
 
-An advanced, microservices-based AI Threat Detection System designed to protect web applications and industrial control interfaces from cyber-attacks in real-time.
+![SCADA Security](https://img.shields.io/badge/Security-ICS%2FSCADA-red)
+![AI Engine](https://img.shields.io/badge/AI-LSTM%20Autoencoder-blue)
+![Dashboard](https://img.shields.io/badge/Dashboard-MERN%20Stack-brightgreen)
 
-## 🏗️ Architecture Overview
+## 📌 Project Overview
 
-The system is built on a containerized microservices architecture, utilizing Machine Learning for anomaly detection and WebSockets for real-time telemetry.
+This project is an advanced, real-time Intrusion Detection System (IDS) engineered for Industrial Control Systems (ICS). Designed as a 5th-year Computer and Automatic Control Engineering graduation project, it bridges the gap between Operational Technology (OT) and Information Technology (IT) security.
 
-- **Frontend:** React.js dashboard with active WebSocket listeners for real-time threat visualization.
-- **Backend:** FastAPI (Python) asynchronous server handling traffic routing and ML model serving.
-- **Security Layer:** Redis-based rate limiting algorithm to mitigate DDoS and brute-force attempts.
-- **Database:** PostgreSQL for immutable logging of threat events, managed via SQLAlchemy and Alembic.
-- **AI Engine:** Random Forest Classifier & TF-IDF Vectorizer trained on 56,000+ real-world payloads to detect SQL Injection, XSS, and Path Traversal with high confidence.
-- **Infrastructure:** Fully dockerized environment using Docker Compose.
+The system monitors live Modbus TCP traffic from a SCADA environment, utilizing a dual-mode detection engine to identify physical anomalies and cyber-attacks (such as False Data Injection and Actuator Tampering) before physical damage occurs.
 
-## ✨ Core Features
+## 🏗️ System Architecture
 
-1. **AI Pattern Recognition:** Generalizes attack patterns mathematically rather than relying on static regex rules (High confidence scoring).
-2. **Real-Time Broadcasting:** Full-duplex WebSocket connections instantly push threats to the radar dashboard.
-3. **Active Rate Limiting:** Drops malicious traffic dynamically (HTTP 429) before it reaches the AI inference engine, saving CPU cycles.
-4. **Stress-Tested:** Proven to handle simulated burst attacks and continuous traffic smoothly.
+The architecture is divided into three critical layers:
 
-## 🚀 Getting Started
+1. **OT Layer (The Plant):** \* **Factory I/O:** Simulates the physical water treatment plant (Tanks, Valves, Pumps).
+   - **OpenPLC:** Executes Ladder Logic and serves as the Modbus TCP Server.
+2. **AI / Security Layer (The Brain):**
+   - **Python Sniffer:** Continuously intercepts Modbus registers holding sensor and actuator data.
+   - **LSTM Autoencoder:** A Deep Learning model trained on the physical baseline of the plant to detect complex, multi-variable False Data Injection (FDI) attacks.
+   - **Rule-Based Engine:** A deterministic algorithm to detect high-frequency mechanical tampering (Chattering/Oscillation attacks).
+3. **IT / Monitoring Layer (The Command Center):**
+   - **Node.js/Express Backend:** Ingests threat data via REST API.
+   - **MongoDB Atlas:** Securely logs all incident records.
+   - **React.js Frontend:** A secure, authenticated dashboard displaying real-time MSE (Mean Squared Error) charts via **WebSockets**.
 
-### Prerequisites
+## 🚀 Features
 
-- Docker & Docker Compose installed on your machine.
+- **Zero-Latency Detection:** Processes Modbus traffic and evaluates physics violations in milliseconds.
+- **Dual-Mode Engine:** Combines AI (Long Short-Term Memory networks) for unknown anomalies with Rule-based logic for specific mechanical abuse.
+- **Live Incident Dashboard:** Real-time visual monitoring using `Recharts` and `Socket.io` without page reloads.
+- **Hysteresis & Deadband Logic:** Physics-informed PLC programming to prevent false positives during normal plant operations.
+- **Secure Architecture:** JWT-based authentication and isolated API routes.
 
-### Installation & Run
+## 🛠️ Technology Stack
 
-1. Clone the repository:
+- **Machine Learning:** TensorFlow, Keras, Scikit-learn, Numpy, Pandas, Joblib.
+- **Industrial Protocols:** PyModbus (Modbus TCP).
+- **Backend:** Node.js, Express, Mongoose, Socket.io, JWT, Bcrypt.
+- **Frontend:** React, Vite, React-Router-Dom, Axios, Recharts.
+- **Database:** MongoDB Atlas (Cloud).
+- **Automation Control:** OpenPLC Editor, Factory I/O.
 
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   cd YOUR_REPO_NAME
+## ⚙️ Installation & Execution Guide
 
-   ```
+### 1. OT Environment Setup
 
-2. Boot the microservices architecture:
-   docker compose up -d --build
+1. Launch **Factory I/O** and open the designated plant scene.
+2. Launch **OpenPLC**, load the compiled Ladder Logic (`.st` file), and start the Modbus server on `127.0.0.1:502`.
+3. Connect Factory I/O to the OpenPLC Modbus driver.
 
-3. Access the interfaces:
+### 2. Backend Setup
 
-Live Dashboard: http://localhost:5173
+```bash
+cd backend
+npm install
 
-API Swagger UI: http://localhost:8000/docs
+```
 
-🧠 ML Data Pipeline
-Note: Datasets and trained .pkl models are excluded from this repository. To retrain the engine locally, place your raw .csv payloads in backend/data/ and execute the ETL pipeline script merge_data.py, followed by the training script train.py.
+Create a `.env` file in the `backend` directory:
+
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://<your_username>:<your_password>@cluster0.mongodb.net/scada_ids_db
+JWT_SECRET=your_super_secret_key
+
+```
+
+Start the server:
+
+```bash
+node server.js
+
+```
+
+### 3. Frontend Setup (Command Center)
+
+```bash
+cd frontend
+npm install
+npm run dev
+
+```
+
+Navigate to `http://localhost:5173`. Use default admin credentials (`admin` / `admin123`) to access the dashboard.
+
+### 4. AI Engine Execution
+
+Open a new terminal and activate your Python environment:
+
+```bash
+cd machine_learning
+pip install -r requirements.txt # (Ensure tensorflow, pymodbus, joblib, scikit-learn are installed)
+python realtime_ids.py
+
+```
+
+_The system will now bridge the SCADA traffic to the AI model and broadcast alerts to the React Dashboard._
+
+## 👨‍💻 Author
+
+**Mussab Atif Asad** _Computerand Automatic Control Engineering_
+
+---
+
+_Disclaimer: This project was built for academic and research purposes to demonstrate cybersecurity vulnerabilities and mitigation strategies in industrial networks._
+
+```
+
+```
