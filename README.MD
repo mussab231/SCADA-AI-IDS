@@ -76,14 +76,13 @@ node server.js
 
 ### 3. Frontend Setup (Command Center)
 
-```bash
+bash
 cd frontend
 npm install
 npm run dev
 
-```
-
-Navigate to `http://localhost:5173`. Use default admin credentials (`admin` / `admin123`) to access the dashboard.
+Navigate to http://localhost:5173.
+Note: The initial security admin account is dynamically generated upon the first backend execution based on the ADMIN_USERNAME and ADMIN_PASSWORD defined in your .env file. Use those credentials to login.
 
 ### 4. AI Engine Execution
 

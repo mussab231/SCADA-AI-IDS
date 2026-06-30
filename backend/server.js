@@ -40,17 +40,26 @@ mongoose
   .then(async () => {
     console.log("[INFO] Connected to MongoDB: scada_ids_db");
 
-    const adminExists = await User.findOne({ username: "admin" });
-    if (!adminExists) {
-      const hashedPassword = await bcrypt.hash("admin123", 10);
-      await User.create({ username: "admin", password: hashedPassword });
+    // قراءة بيانات الأدمن من ملف البيئة المخفي
+    const adminUser = process.env.ADMIN_USERNAME;
+    const adminPass = process.env.ADMIN_PASSWORD;
+
+    if (adminUser && adminPass) {
+      const adminExists = await User.findOne({ username: adminUser });
+      if (!adminExists) {
+        const hashedPassword = await bcrypt.hash(adminPass, 10);
+        await User.create({ username: adminUser, password: hashedPassword });
+        console.log(
+          `[CRITICAL] Security Admin [${adminUser}] created from .env configuration.`,
+        );
+      }
+    } else {
       console.log(
-        "[CRITICAL] Default Security Admin created. (admin / admin123)",
+        "[WARNING] ADMIN_USERNAME or ADMIN_PASSWORD missing in .env. No default admin created.",
       );
     }
   })
   .catch((err) => console.error("[ERROR] MongoDB Connection Failed:", err));
-
 // ==========================================
 // 3. API Routes
 // ==========================================
