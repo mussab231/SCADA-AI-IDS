@@ -1,15 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard.jsx";
+import Dashboard from "./pages/Dashboard";
 
-// نظام حماية المسارات (Protected Routes Guard)
-const ProtectedRoute = ({ children }) => {
+// Redirect to login if no token
+function ProtectedRoute({ children }) {
   const token = localStorage.getItem("scada_token");
-  if (!token) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
-};
+  return token ? children : <Navigate to="/" replace />;
+}
 
 export default function App() {
   return (
@@ -24,6 +21,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
